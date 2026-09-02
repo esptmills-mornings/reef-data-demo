@@ -5,7 +5,7 @@
 
 ## 1. Core analogy, made precise
 
-| Amperity CDP | This platform |
+| CDP | This platform |
 |---|---|
 | Customer | **Location entity** (reef tract, watershed, farm parcel, grid cell) |
 | Identity resolution (cookie/email/loyalty card → one person) | **Geospatial resolution** (satellite pixel/buoy/station/IoT sensor → one location entity) |
@@ -83,7 +83,7 @@ Key design decisions to make explicit early:
 
 **Normalize**
 - Resample/crosswalk each source to `entity_id` + monthly timestamp
-- Land in a single long-format table: `(entity_id, timestamp, source, variable, value)` — this is your unified timeline, the direct equivalent of Amperity's unified customer event stream
+- Land in a single long-format table: `(entity_id, timestamp, source, variable, value)` — this is your unified timeline, the direct equivalent of a CDP's unified customer event stream
 
 **Lag-Alignment Engine** (the novel part)
 - For a candidate cause variable (SST anomaly) and effect variable (bleaching alert level), test a range of lags (e.g. 0–6 months)
@@ -119,7 +119,7 @@ Key design decisions to make explicit early:
 | **2** | Add raw satellite (MODIS SST) instead of pre-aggregated NOAA product | Handling gridded/netCDF ingestion, real resampling |
 | **3** | Second entity type (e.g. farm parcels + air quality + crop yield) | Entity model generalizes across domains |
 | **4** | IoT sensor ingestion, daily grain | Real-time / higher-frequency joins |
-| **5** | Global scale, many entity types | The actual "Amperity for climate" platform |
+| **5** | Global scale, many entity types | The actual "CDP for climate" platform |
 
 **Recommendation: stop after Phase 1 or 2 for a pitch/demo.** That's enough to show the entity model, the lag-alignment engine, and one compelling visualized pattern — the core of the idea — without the cost of building real infrastructure.
 
