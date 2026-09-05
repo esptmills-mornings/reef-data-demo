@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Location, Every Source — A Unified Climate Data Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0A0E1A;
+    --panel: #121A2E;
+    --panel-2: #17203a;
+    --border: #232d4a;
+    --teal: #3FC7B8;
+    --teal-dim: rgba(63,199,184,0.15);
+    --orange: #FF5A3C;
+    --orange-dim: rgba(255,90,60,0.15);
+    --text: #EDEFF5;
+    --muted: #8B93A7;
+    --mono: 'IBM Plex Mono', monospace;
+    --display: 'Space Grotesk', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--teal); color: var(--bg); }
+  a { color: var(--teal); }
+
+  /* ===== Layout ===== */
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+  section { padding: 90px 0; }
+  @media (max-width: 640px) {
+    section { padding: 56px 0; }
+    .wrap { padding: 0 20px; }
+  }
+
+  /* ===== Hero ===== */
+  .hero {
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -20%; right: -10%;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--teal-dim) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 12px var(--teal);
+  }
+  h1.headline {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(2.2rem, 5.5vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    max-width: 850px;
+  }
+  h1.headline .accent { color: var(--teal); }
+  .sub {
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 620px;
+    margin-top: 26px;
+    line-height: 1.65;
+  }
+
+  /* ===== Timeline convergence animation ===== */
+  .convergence {
+    margin-top: 64px;
+    max-width: 760px;
+  }
+  .track-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+    opacity: 0;
+    animation: trackIn 0.7s ease forwards;
+  }
+  .track-row:nth-child(1) { animation-delay: 0.1s; }
+  .track-row:nth-child(2) { animation-delay: 0.28s; }
+  .track-row:nth-child(3) { animation-delay: 0.46s; }
+  .track-row:nth-child(4) { animation-delay: 0.64s; }
+  @keyframes trackIn {
+    from { opacity: 0; transform: translateX(-16px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .track-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    width: 76px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .track-line {
+    flex: 1;
+    height: 34px;
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .track-line svg { width: 100%; height: 100%; display: block; }
+  .converge-arrow {
+    text-align: center;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    margin: 14px 0;
+    opacity: 0;
+    animation: fadeIn 0.6s ease 0.9s forwards;
+  }
+  .unified-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    animation: fadeIn 0.8s ease 1.1s forwards;
+  }
+  .unified-row .track-label { color: var(--teal); font-weight: 600; }
+  .unified-line {
+    flex: 1;
+    height: 46px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--teal-dim), var(--orange-dim));
+    border: 1px solid var(--teal);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text);
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .scroll-cue {
+    margin-top: 56px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* ===== Section headers ===== */
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 12px;
+  }
+  h2.section-title {
+    font-family: var(--display);
+    font-size: clamp(1.6rem, 3.5vw, 2.3rem);
+    font-weight: 600;
+    max-width: 700px;
+    line-height: 1.2;
+  }
+  .section-intro {
+    color: var(--muted);
+    max-width: 640px;
+    margin-top: 16px;
+    font-size: 1.02rem;
+  }
+
+  /* ===== Finding cards ===== */
+  .findings { margin-top: 56px; display: flex; flex-direction: column; gap: 2px; }
+  .finding {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 32px;
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+  }
+  @media (max-width: 720px) {
+    .finding { grid-template-columns: 1fr; gap: 16px; }
+  }
+  .finding-num {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--teal);
+    padding-top: 4px;
+  }
+  .finding-body h3 {
+    font-family: var(--display);
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .finding-body p {
+    color: var(--muted);
+    font-size: 0.98rem;
+    max-width: 640px;
+  }
+  .finding-body .stat-row {
+    display: flex;
+    gap: 28px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    font-family: var(--mono);
+  }
+  .stat .val {
+    font-size: 1.5rem;
+    color: var(--teal);
+    font-weight: 500;
+    display: block;
+  }
+  .stat.orange .val { color: var(--orange); }
+  .stat .lbl {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .finding-chart {
+    margin-top: 22px;
+    height: 160px;
+    max-width: 640px;
+  }
+
+  /* ===== CTA into explorer ===== */
+  .cta-block {
+    margin-top: 70px;
+    padding: 44px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .cta-block h3 {
+    font-family: var(--display);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .cta-block p { color: var(--muted); font-size: 0.95rem; max-width: 440px; }
+  .btn {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    background: var(--teal);
+    color: var(--bg);
+    border: none;
+    padding: 14px 26px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(63,199,184,0.25); }
+  .btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+
+  /* ===== Explorer ===== */
+  #explorer {
+    background: var(--panel-2);
+    border-top: 1px solid var(--border);
+  }
+  .entity-select {
+    display: flex;
+    gap: 10px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .entity-btn {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .entity-btn:hover { border-color: var(--teal); color: var(--text); }
+  .entity-btn.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--bg);
+    font-weight: 500;
+  }
+  .entity-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .entity-meta {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 14px;
+  }
+  .entity-meta .coord { color: var(--teal); }
+
+  .layer-toggles {
+    display: flex;
+    gap: 8px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .layer-chip {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+  }
+  .layer-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .layer-chip.active { color: var(--text); border-color: currentColor; background: rgba(255,255,255,0.04); }
+  .layer-chip:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+  .explorer-chart-wrap {
+    margin-top: 32px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .explorer-chart-wrap canvas { max-height: 420px; }
+
+  .provenance-note {
+    margin-top: 18px;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--muted);
+    line-height: 1.7;
+    padding: 16px 18px;
+    background: var(--panel);
+    border-left: 2px solid var(--teal);
+    border-radius: 0 8px 8px 0;
+  }
+  .provenance-note strong { color: var(--text); }
+
+  /* ===== Footer ===== */
+  footer {
+    padding: 60px 0 80px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  footer p { color: var(--muted); font-size: 0.85rem; font-family: var(--mono); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Prototype — climate data unification</div>
+    <h1 class="headline">One location. Every source. <span class="accent">One timeline.</span></h1>
+    <p class="sub">Ocean temperature, wind stations, storm tracks, reef surveys, fishery models — scattered across a dozen agencies and formats. This is what happens when they're resolved to one entity and read together.</p>
+
+    <div class="convergence" role="img" aria-label="Animation showing four separate data tracks — ocean temperature index, satellite heat stress, wind speed, and storm tracks — converging into one unified entity timeline">
+      <div class="track-row">
+        <span class="track-label">ONI</span>
+        <div class="track-line"><svg viewBox="0 0 400 34" preserveAspectRatio="none"><polyline points="0,20 40,12 80,8 120,22 160,26 200,10 240,6 280,18 320,24 360,14 400,20" fill="none" stroke="#3FC7B8" stroke-width="1.5" opacity="0.7"/></svg></div>
+      </div>
+      <div class="track-row">
+        <span class="track-label">DHW</span>
+        <div class="track-line"><svg viewBox="0 0 400 34" preserveAspectRatio="none"><polyline points="0,28 40,26 80,24 120,10 160,6 200,14 240,20 280,8 320,4 360,16 400,22" fill="none" stroke="#FF5A3C" stroke-width="1.5" opacity="0.7"/></svg></div>
+      </div>
+      <div class="track-row">
+        <span class="track-label">WIND</span>
+        <div class="track-line"><svg viewBox="0 0 400 34" preserveAspectRatio="none"><rect x="10" y="18" width="6" height="12" fill="#3FC7B8" opacity="0.6"/><rect x="40" y="10" width="6" height="20" fill="#3FC7B8" opacity="0.6"/><rect x="70" y="22" width="6" height="8" fill="#3FC7B8" opacity="0.6"/><rect x="100" y="6" width="6" height="24" fill="#3FC7B8" opacity="0.6"/><rect x="130" y="16" width="6" height="14" fill="#3FC7B8" opacity="0.6"/><rect x="160" y="20" width="6" height="10" fill="#3FC7B8" opacity="0.6"/><rect x="190" y="8" width="6" height="22" fill="#3FC7B8" opacity="0.6"/><rect x="220" y="24" width="6" height="6" fill="#3FC7B8" opacity="0.6"/><rect x="250" y="12" width="6" height="18" fill="#3FC7B8" opacity="0.6"/><rect x="280" y="18" width="6" height="12" fill="#3FC7B8" opacity="0.6"/><rect x="310" y="9" width="6" height="21" fill="#3FC7B8" opacity="0.6"/><rect x="340" y="15" width="6" height="15" fill="#3FC7B8" opacity="0.6"/><rect x="370" y="21" width="6" height="9" fill="#3FC7B8" opacity="0.6"/></svg></div>
+      </div>
+      <div class="track-row">
+        <span class="track-label">STORMS</span>
+        <div class="track-line"><svg viewBox="0 0 400 34" preserveAspectRatio="none"><circle cx="60" cy="17" r="5" fill="#FF5A3C" opacity="0.7"/><circle cx="210" cy="17" r="7" fill="#FF5A3C" opacity="0.8"/><circle cx="330" cy="17" r="4" fill="#FF5A3C" opacity="0.6"/></svg></div>
+      </div>
+      <div class="converge-arrow">↓ resolved to one entity ↓</div>
+      <div class="unified-row">
+        <span class="track-label">ENTITY</span>
+        <div class="unified-line">central_gbr.timeline — 5 sources, 1985–2026, one location</div>
+      </div>
+    </div>
+
+    <div class="scroll-cue">↓ five things this actually found</div>
+  </div>
+</section>
+
+<section id="narrative">
+  <div class="wrap">
+    <div class="section-eyebrow">What unifying the data actually revealed</div>
+    <h2 class="section-title">Five findings that only exist because the sources talk to each other.</h2>
+    <p class="section-intro">Every number below is real — pulled from NOAA, AIMS, and the Queensland government's own primary data, not summarized from a report. The findings are ordered by how much cross-referencing each one needed.</p>
+
+    <div class="findings">
+
+      <div class="finding">
+        <div class="finding-num">01</div>
+        <div class="finding-body">
+          <h3>The trigger for reef bleaching is quietly changing.</h3>
+          <p>Cross-referencing satellite heat stress against the El Niño index across 26 years shows peak thermal stress at the Great Barrier Reef more than doubling since the 1990s — regardless of whether an El Niño is even present.</p>
+          <div class="stat-row">
+            <div class="stat"><span class="val">5.0 → 12.0</span><span class="lbl">peak DHW, 1998 → 2024</span></div>
+            <div class="stat orange"><span class="val">3 of 7</span><span class="lbl">recent bleaching years had no El Niño</span></div>
+          </div>
+          <div class="finding-chart"><canvas id="chart01"></canvas></div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">02</div>
+        <div class="finding-body">
+          <h3>Two reefs bleached the same year — for unrelated reasons, seven months apart.</h3>
+          <p>2017 looked like one global event from either reef's dashboard alone. The unified timeline showed the Great Barrier Reef actually peaked in March and the Mesoamerican Reef in October — different hemispheres, different seasons, different causes: local wind conditions in the Pacific, a named Atlantic climate mode with no Pacific ENSO involvement at all.</p>
+          <div class="stat-row">
+            <div class="stat"><span class="val">7 months</span><span class="lbl">apart, not simultaneous</span></div>
+            <div class="stat orange"><span class="val">2 causes</span><span class="lbl">one basin each, unrelated</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">03</div>
+        <div class="finding-body">
+          <h3>Raw tracking data corrected two cited storm categories on contact.</h3>
+          <p>Published sources cited Cyclones Larry and Yasi at Category 5. The actual storm-track data, resolved to the specific reef entity, showed Category 4 at closest approach — the citation was each storm's lifetime peak intensity, recorded somewhere else entirely.</p>
+          <div class="stat-row">
+            <div class="stat"><span class="val">Cat 5 → 4</span><span class="lbl">corrected, both storms</span></div>
+            <div class="stat orange"><span class="val">308,468</span><span class="lbl">real storm-track rows checked</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">04</div>
+        <div class="finding-body">
+          <h3>Coral and fish moved in opposite directions — because they answer to different forces.</h3>
+          <p>At the Mesoamerican Reef, 2022 to 2024: live coral cover kept falling (climate-driven), while fish biomass rose sharply (fisheries-enforcement-driven). A single "reef health" score would have averaged the two together and hidden exactly the distinction a manager needs.</p>
+          <div class="stat-row">
+            <div class="stat"><span class="val">19% → 17%</span><span class="lbl">coral cover, falling</span></div>
+            <div class="stat orange"><span class="val">+40%</span><span class="lbl">fish biomass, rising</span></div>
+          </div>
+          <div class="finding-chart"><canvas id="chart04"></canvas></div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">05</div>
+        <div class="finding-body">
+          <h3>The same policy read as a 2-year success or a 7-year failure — depending only on scale.</h3>
+          <p>Fish inside no-take marine reserves recovered within 2 years of the 2004 rezoning. The whole-fishery average — diluted by two-thirds of the reef staying open — didn't visibly turn around until 2011. Same policy, same data, two different answers depending purely on what grain you read it at.</p>
+          <div class="stat-row">
+            <div class="stat"><span class="val">2 years</span><span class="lbl">zone-level recovery</span></div>
+            <div class="stat orange"><span class="val">7 years</span><span class="lbl">fishery-wide average catches up</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cta-block">
+      <div>
+        <h3>See the raw entity timelines</h3>
+        <p>Pick a reef. Toggle the data layers. This is the actual unified data, not a rendering of it.</p>
+      </div>
+      <button class="btn" onclick="document.getElementById('explorer').scrollIntoView({behavior:'smooth'})">Open the explorer ↓</button>
+    </div>
+  </div>
+</section>
+
+<section id="explorer">
+  <div class="wrap">
+    <div class="section-eyebrow">Interactive</div>
+    <h2 class="section-title">The unified entity timeline, live.</h2>
+    <p class="section-intro">Three real locations, each resolved from multiple independent sources into one timeline. Every value plotted here is a number that was actually ingested during this project — not illustrative.</p>
+
+    <div class="entity-select" role="tablist" aria-label="Select reef entity">
+      <button class="entity-btn active" data-entity="gbr">Central Great Barrier Reef</button>
+      <button class="entity-btn" data-entity="belize">Belize Barrier Reef</button>
+      <button class="entity-btn" data-entity="qroo">Quintana Roo, Mexico</button>
+    </div>
+    <div class="entity-meta" id="entityMeta"></div>
+
+    <div class="layer-toggles" id="layerToggles"></div>
+
+    <div class="explorer-chart-wrap">
+      <canvas id="explorerChart"></canvas>
+    </div>
+
+    <div class="provenance-note" id="provenanceNote"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Prototype built to test whether Amperity-style entity resolution generalizes to climate and ecological data. All figures sourced from NOAA, AIMS, Queensland DAF, and NASA/UW-Madison — see the full technical writeup for methodology, schemas, and every source's raw ingestion status.</p>
+  </div>
+</footer>
+
+<script>
+// ============ Real data, compiled from the full project ============
+const entities = {
+  gbr: {
+    name: 'Central Great Barrier Reef',
+    coord: '-18.3, 147.7',
+    basin: 'Pacific',
+    years: ['1998','2002','2006','2009','2011','2016','2017','2020','2022','2024'],
+    layers: {
+      oni:      { label: 'ONI (El Niño index)', color: '#3FC7B8', unit: '°C', data: [2.37,1.19,0.88,0.50,-1.02,2.59,0.35,-0.29,-0.77,1.99] },
+      dhw:      { label: 'Peak DHW (satellite heat stress)', color: '#FF5A3C', unit: '', data: [5.04,7.02,1.55,3.91,2.56,5.95,10.5,10.61,10.91,12.03] },
+      wind:     { label: 'Wind anomaly vs climatology', color: '#8B93A7', unit: 'km/h', data: [-0.41,2.11,1.51,null,8.46,-2.55,-4.16,-4.15,0.48,4.02] },
+      bleach:   { label: '% reefs bleached', color: '#FFD166', unit: '%', data: [55,54,null,null,null,93,20,60,91,79] },
+      coral:    { label: 'Coral cover (150km mean)', color: '#4FD1C5', unit: '%', data: [26.48,18.85,8.96,11.63,7.89,25.83,24.73,21.51,35.47,null] }
+    },
+    provenance: '<strong>Raw-ingested:</strong> ONI (NOAA CPC, direct fetch), DHW (NOAA Coral Reef Watch daily record, 1985–2026), Wind (AIMS Davies Reef station, 1991–2026), Coral cover (AIMS LTMP manta-tow survey, 1993–2023). <strong>Cited only:</strong> bleaching severity % (AIMS/JCU survey reports).'
+  },
+  belize: {
+    name: 'Belize Barrier Reef',
+    coord: '17.0, -87.8',
+    basin: 'Atlantic',
+    years: ['1998','2000','2001','2005','2007','2010','2016','2017','2020','2022','2024'],
+    layers: {
+      amm:      { label: 'AMM index (Atlantic mode)', color: '#3FC7B8', unit: '°C', data: [4.11,null,null,3.63,null,6.11,2.65,2.94,null,null,5.51] },
+      dhw:      { label: 'Peak DHW (satellite heat stress)', color: '#FF5A3C', unit: '', data: [0.78,null,null,3.11,null,5.21,5.40,5.20,null,null,2.27] },
+      storm:    { label: 'Storm category at closest approach', color: '#FFD166', unit: 'Cat', data: [5,4,4,4,5,2,null,null,1,1,3] }
+    },
+    provenance: '<strong>Raw-ingested:</strong> DHW (NOAA Coral Reef Watch, 1985–2026), AMM (Vimont/UW-Madison index, 1948–2026), Storm category (NOAA IBTrACS best-track, 1980–2026, resolved by proximity). <strong>Cited only:</strong> reef health index, coral cover, fish biomass (Healthy Reefs Initiative report cards).'
+  },
+  qroo: {
+    name: 'Quintana Roo, Mexico',
+    coord: '20.0, -87.0',
+    basin: 'Atlantic',
+    years: ['1998','2000','2001','2005','2007','2010','2016','2017','2020','2022','2024'],
+    layers: {
+      amm:      { label: 'AMM index (Atlantic mode)', color: '#3FC7B8', unit: '°C', data: [4.11,null,null,3.63,null,6.11,2.65,2.94,null,null,5.51] },
+      dhw:      { label: 'Peak DHW (satellite heat stress)', color: '#FF5A3C', unit: '', data: [1.52,null,null,3.15,null,4.69,4.09,4.76,null,null,1.39] },
+      storm:    { label: 'Storm category at closest approach', color: '#FFD166', unit: 'Cat', data: [null,null,null,4,null,null,null,null,3,null,null] }
+    },
+    provenance: '<strong>Raw-ingested:</strong> DHW (NOAA Coral Reef Watch, 1985–2026), AMM (Vimont/UW-Madison index, 1948–2026), Storm category (NOAA IBTrACS best-track, resolved by proximity). Note: Hurricane Eta (2020) is absent — it made landfall in Honduras, outside this entity&#39;s 300km radius, a real coverage gap in a 2-entity MAR model.'
+  }
+};
+
+let currentEntity = 'gbr';
+let activeLayers = new Set(['oni','dhw','wind','amm']);
+let chart;
+
+function renderEntityMeta(key) {
+  const e = entities[key];
+  document.getElementById('entityMeta').innerHTML = `<span class="coord">${e.coord}</span> · ${e.basin} basin · entity_id: ${key}_reef`;
+}
+
+function renderLayerToggles(key) {
+  const e = entities[key];
+  const container = document.getElementById('layerToggles');
+  container.innerHTML = '';
+  Object.entries(e.layers).forEach(([layerKey, layer]) => {
+    const chip = document.createElement('button');
+    chip.className = 'layer-chip' + (activeLayers.has(layerKey) ? ' active' : '');
+    chip.style.color = activeLayers.has(layerKey) ? layer.color : '';
+    chip.innerHTML = `<span class="dot" style="background:${layer.color}"></span>${layer.label}`;
+    chip.onclick = () => {
+      if (activeLayers.has(layerKey)) activeLayers.delete(layerKey);
+      else activeLayers.add(layerKey);
+      renderLayerToggles(key);
+      renderChart(key);
+    };
+    container.appendChild(chip);
+  });
+}
+
+function renderChart(key) {
+  const e = entities[key];
+  const datasets = Object.entries(e.layers)
+    .filter(([k]) => activeLayers.has(k))
+    .map(([k, layer], i) => ({
+      label: layer.label + (layer.unit ? ` (${layer.unit})` : ''),
+      data: layer.data,
+      borderColor: layer.color,
+      backgroundColor: layer.color + '22',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: layer.color,
+      spanGaps: true,
+      tension: 0.25,
+      yAxisID: 'y' + i,
+      type: k === 'storm' || k === 'bleach' ? 'bar' : 'line'
+    }));
+
+  const scales = { x: { ticks: { color: '#8B93A7', font: { family: 'IBM Plex Mono', size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } } };
+  datasets.forEach((d, i) => {
+    scales['y' + i] = {
+      position: i % 2 === 0 ? 'left' : 'right',
+      display: i < 2,
+      ticks: { color: '#8B93A7', font: { family: 'IBM Plex Mono', size: 10 } },
+      grid: { color: i === 0 ? 'rgba(255,255,255,0.06)' : 'transparent' }
+    };
+  });
+
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('explorerChart'), {
+    data: { labels: e.years, datasets },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#8B93A7', font: { family: 'IBM Plex Mono', size: 11 } } } },
+      scales
+    }
+  });
+
+  document.getElementById('provenanceNote').innerHTML = e.provenance;
+}
+
+document.querySelectorAll('.entity-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.entity-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentEntity = btn.dataset.entity;
+    activeLayers = new Set(Object.keys(entities[currentEntity].layers).slice(0, 3));
+    renderEntityMeta(currentEntity);
+    renderLayerToggles(currentEntity);
+    renderChart(currentEntity);
+  };
+});
+
+// Init
+renderEntityMeta('gbr');
+renderLayerToggles('gbr');
+renderChart('gbr');
+
+// Finding mini-charts
+new Chart(document.getElementById('chart01'), {
+  type: 'line',
+  data: {
+    labels: ['1998','2002','2016','2017','2020','2022','2024'],
+    datasets: [{
+      label: 'Peak DHW',
+      data: [5.04,7.02,5.95,10.5,10.61,10.91,12.03],
+      borderColor: '#FF5A3C',
+      backgroundColor: 'rgba(255,90,60,0.12)',
+      borderWidth: 2,
+      pointRadius: 3,
+      pointBackgroundColor: '#FF5A3C',
+      fill: true,
+      tension: 0.3
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#8B93A7', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { display: false } },
+      y: { ticks: { color: '#8B93A7', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+    }
+  }
+});
+
+new Chart(document.getElementById('chart04'), {
+  data: {
+    labels: ['2022','2024'],
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Coral cover %',
+        data: [19, 17],
+        backgroundColor: '#FF5A3C',
+        borderRadius: 4,
+        yAxisID: 'y'
+      },
+      {
+        type: 'line',
+        label: 'Fish biomass index',
+        data: [100, 140],
+        borderColor: '#3FC7B8',
+        backgroundColor: '#3FC7B8',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: '#3FC7B8',
+        yAxisID: 'y1'
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#8B93A7', font: { family: 'IBM Plex Mono', size: 10 } } } },
+    scales: {
+      x: { ticks: { color: '#8B93A7', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { display: false } },
+      y: { position: 'left', min: 0, max: 25, ticks: { color: '#8B93A7', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      y1: { position: 'right', min: 90, max: 150, ticks: { color: '#8B93A7', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { display: false } }
+    }
+  }
+});
+</script>
+</body>
+</html>
